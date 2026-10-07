@@ -68,8 +68,8 @@ Los cultivadores urbanos, aficionados a la botánica y pequeños productores agr
   }
   ```
 
-### Escalado a Proyecto Funcional (Camino Promoción Directa)
-Para dar cumplimiento a las exigencias de ingeniería de software del Camino 2 (Individual):
+### Escalado a Proyecto Funcional
+
 1. **Eje Arquitectura y Despliegue:** 
    * Validación estricta del esquema de entrada mediante **Pydantic**.
    * Contenerización completa de la solución utilizando **Docker**.
