@@ -1,0 +1,112 @@
+[
+  {
+    "id": "faq_calificaciones_001",
+    "categoria": "sistema_de_calificaciones",
+    "pregunta_referencia": "¿Cómo es la escala de notas y cuál es la nota mínima para aprobar un examen?",
+    "preguntas_alternativas": [
+      "¿Con cuánto se aprueba un final?",
+      "Equivalencia de porcentajes y notas en los exámenes",
+      "¿Qué nota equivale a un 'Aprobado' o 'Bueno'?"
+    ],
+    "respuesta_oficial": "Los exámenes y evaluaciones se califican de 0 a 10. La nota mínima de aprobación es 4 (cuatro), que equivale al 55%-59%. De 0 a 3 es reprobado. Para nota 7 (Bueno) se requiere 74%-80%, y para 10 (Sobresaliente) un 96%-100%."
+  },
+  {
+    "id": "faq_calificaciones_002",
+    "categoria": "sistema_de_calificaciones",
+    "pregunta_referencia": "¿Cuál es el procedimiento ante irregularidades o sospecha de copia en un examen?",
+    "preguntas_alternativas": [
+      "¿Qué pasa si me descubren copiándome en un examen?",
+      "Sanción por fraude o copia en un examen final o parcial",
+      "Irregularidades en las evaluaciones"
+    ],
+    "respuesta_oficial": "Si se observan anormalidades o sospecha de copia durante o al corregir el examen, el docente asigna nota cero (0) e informa por escrito a Secretaría Administrativa para iniciar las actuaciones del régimen disciplinario."
+  },
+  {
+    "id": "faq_cursado_001",
+    "categoria": "cursado_y_aprobacion",
+    "pregunta_referencia": "¿Qué requisitos necesito para obtener la regularidad en una materia?",
+    "preguntas_alternativas": [
+      "¿Cómo quedo regular en una asignatura?",
+      "Requisitos de notas y asistencia para no quedar libre",
+      "¿Con qué nota se aprueban las actividades evaluativas obligatorias para regularizar?"
+    ],
+    "respuesta_oficial": "Para la regularidad debés: 1) Aprobar las evaluaciones obligatorias con nota mínima de 4. 2) Cumplir con la asistencia/actividades fijadas en el programa. 3) Ser estudiante regular o condicional documental al cierre del acta. La regularidad dura hasta 2 años calendario más el turno de examen inmediato posterior (máximo 25 meses)."
+  },
+  {
+    "id": "faq_cursado_002",
+    "categoria": "cursado_y_aprobacion",
+    "pregunta_referencia": "¿Cuáles son las condiciones para la Promoción Directa de una materia?",
+    "preguntas_alternativas": [
+      "¿Cómo promociono directamente sin rendir final ni coloquio?",
+      "Nota mínima para promoción directa",
+      "Requisitos de Promoción Directa en las materias"
+    ],
+    "respuesta_oficial": "Debés aprobar todas las evaluaciones obligatorias con nota mínima de 7, cumplir con los requisitos de asistencia/actividades del programa analítico y ser estudiante regular o condicional documental al cierre de actas. La nota final calculada no podrá ser inferior a 7."
+  },
+  {
+    "id": "faq_cursado_003",
+    "categoria": "cursado_y_aprobacion",
+    "pregunta_referencia": "¿Cómo funciona la Promoción con Coloquio y qué pasa si falto o lo repruebo?",
+    "preguntas_alternativas": [
+      "¿Con qué nota se accede al coloquio?",
+      "¿Qué nota necesito en el coloquio para aprobar la materia?",
+      "¿Qué ocurre si me va mal en el coloquio?"
+    ],
+    "respuesta_oficial": "Exige aprobar las evaluaciones obligatorias con nota mínima de 6 y rendir un coloquio en el turno inmediato posterior al cursado. El coloquio se aprueba con nota mínima de 7. Si te ausentás o reprobás el coloquio, perdés la promoción y la materia pasa automáticamente a condición de regular."
+  },
+  {
+    "id": "faq_cursado_004",
+    "categoria": "cursado_y_aprobacion",
+    "pregunta_referencia": "¿Qué provoca la pérdida de regularidad en una materia?",
+    "preguntas_alternativas": [
+      "¿Cuándo pierdo la regularidad y me transformo en libre?",
+      "¿Cuántos aplazos en final puedo tener antes de perder la regularidad?",
+      "Causas para recursar una materia regularizada"
+    ],
+    "respuesta_oficial": "Perdés la regularidad por: 1) Vencimiento del plazo de vigencia (máximo 25 meses). 2) Acumular tres (3) aplazos en el examen final de la materia. 3) Renuncia explícita a la regularidad. En estos casos debés recursar o rendir libre si la materia lo permite."
+  },
+  {
+    "id": "faq_examenes_001",
+    "categoria": "examenes_finales",
+    "pregunta_referencia": "¿Cuáles son las condiciones y límites para rendir un examen en calidad de libre?",
+    "preguntas_alternativas": [
+      "¿Cuántas materias puedo rendir libres en la carrera?",
+      "Límite de finales libres en Grado y Pregrado",
+      "¿Cómo es la modalidad de un examen final libre?"
+    ],
+    "respuesta_oficial": "En carreras de Grado podés rendir libre hasta un 20% del total de materias del plan (máximo 5% de materias no cursadas). En Pregrado el tope es del 10% (máximo 5% no cursadas). El examen consta de evaluación escrita y oral obligatorias; se debe sacar al menos 4 en el escrito para pasar al oral, y la nota final depende del oral (mínimo 4)."
+  },
+  {
+    "id": "faq_licencias_001",
+    "categoria": "licencias_estudiantiles",
+    "pregunta_referencia": "¿Qué es una licencia estudiantil, cuánto dura y cuáles son los motivos permitidos?",
+    "preguntas_alternativas": [
+      "¿Cómo pido una pausa en los estudios sin perder las regularidades?",
+      "Duración máxima y mínima de las licencias estudiantiles",
+      "Motivos para solicitar licencia estudiantil"
+    ],
+    "respuesta_oficial": "Es una pausa temporal autorizada (mínimo 1 mes, máximo 1 año) en la que se conservan las regularidades y promociones sin que corran los plazos académicos. Motivos: embarazo/adopción, deportistas federados, otros estudios universitarios justificados, enfermedades/operaciones de tratamiento prolongado o movilidad laboral."
+  },
+  {
+    "id": "faq_especiales_001",
+    "categoria": "estudiantes_especiales",
+    "pregunta_referencia": "¿Cuál es la diferencia entre un alumno oyente y un alumno vocacional?",
+    "preguntas_alternativas": [
+      "¿Puedo presenciar clases sin rendir?",
+      "¿Qué es un estudiante vocacional?",
+      "¿Un oyente puede rendir exámenes?"
+    ],
+    "respuesta_oficial": "Un 'Oyente' está autorizado a asistir a clases pero sin posibilidad de rendir ni acreditar la materia. Un 'Estudiante Vocacional' es un alumno del IUA autorizado a cursar y rendir una materia específica en otra carrera del IUA, registrándose la actuación por equivalencia en su analítico."
+  },
+  {
+    "id": "faq_generales_001",
+    "categoria": "disposiciones_generales",
+    "pregunta_referencia": "¿Cuál es el canal oficial de comunicación fehaciente del CRUC IUA?",
+    "preguntas_alternativas": [
+      "¿Dónde me notifican oficialmente los trámites e información?",
+      "Validez del correo institucional",
+      "¿Es obligatorio revisar el mail institucional?"
+    ],
+    "respuesta_oficial": "Se considera comunicación fehaciente toda información enviada por el CRUC IUA al correo electrónico institucional asignado al estudiante (@iua.edu.ar). El estudiante tiene la obligación de revisarlo periódicamente."
+  }
+]

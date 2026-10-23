@@ -1,0 +1,6 @@
+sentence-transformers==2.7.0
+chromadb==0.5.0
+langchain-community==0.0.38
+pydantic==2.7.1
+torch==2.3.0
+pytest==8.2.0

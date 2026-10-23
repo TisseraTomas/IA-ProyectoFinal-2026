@@ -1,0 +1,15 @@
+# Entornos virtuales
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Base de datos vectorial local y cachés de modelos
+models/
+.cache/
+.huggingface/
+
+# Archivos del sistema operativo o editores
+.DS_Store
+.vscode/
+.idea/
