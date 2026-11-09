@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from src.config import DISTANCE_THRESHOLD, TOP_K
+from src.config import DISTANCE_THRESHOLD, HYBRID_ALPHA, TOP_K
 
 # --------------------------------------------------------------------------- capa 1: reglas
 # Se aplican sobre el texto en minúsculas y sin acentos.
@@ -68,15 +68,30 @@ def detect_injection(user_query: str) -> str | None:
 
 # --------------------------------------------------------------------------- capa 2: semántica
 class IntentGuardrail:
-    def __init__(self, vector_db, distance_threshold: float = DISTANCE_THRESHOLD, k: int = TOP_K):
+    def __init__(self, vector_db, distance_threshold: float = DISTANCE_THRESHOLD, k: int = TOP_K,
+                 alpha: float = HYBRID_ALPHA):
         self.vector_db = vector_db
         self.threshold = distance_threshold
         self.k = k
+        self.alpha = alpha
+        self.baseline = None
+        if alpha < 1.0:  # compuerta híbrida: se combina con la distancia por palabras clave
+            from src.baseline import KeywordBaseline  # import diferido (evita import circular)
+
+            self.baseline = KeywordBaseline()
 
     def retrieve(self, user_query: str) -> list[dict]:
         """Top-k fragmentos con su distancia coseno (menor = más cercano)."""
         results = self.vector_db.similarity_search_with_score(user_query, k=self.k)
         return [{**doc.metadata, "distance": float(dist)} for doc, dist in results]
+
+    def score(self, user_query: str, hits: list[dict] | None = None) -> float:
+        """Puntaje de la compuerta (menor = más en dominio): embeddings, o mezcla con palabras clave."""
+        hits = hits or self.retrieve(user_query)
+        d = hits[0]["distance"]
+        if self.baseline is None:
+            return d
+        return self.alpha * d + (1.0 - self.alpha) * self.baseline.distance(user_query)
 
     def evaluate_query(self, user_query: str) -> dict:
         rule = detect_injection(user_query)
@@ -87,7 +102,7 @@ class IntentGuardrail:
         if not hits:
             return {"allowed": False, "reason": "Sin coincidencias", "score": None, "data": None}
 
-        best = hits[0]["distance"]
+        best = self.score(user_query, hits)
         if best > self.threshold:
             return {"allowed": False, "reason": "Fuera de dominio", "score": best, "data": None}
         return {"allowed": True, "reason": "En dominio", "score": best, "data": hits}
