@@ -198,9 +198,6 @@ python -m src.evaluate --baseline-only   # sólo el baseline (no descarga modelo
 
 `python -m src.evaluate` imprime el **umbral sugerido**; pegarlo en `DISTANCE_THRESHOLD` de `src/config.py` (el valor actual es inicial).
 
-### 4.6. Convención de commits
-Un commit por incremento lógico, con el problema resuelto y las horas invertidas, por ejemplo: `feat(guardrail): capa de reglas anti-injection [2h]`.
-
 ---
 
 ## 5. Validación y Métricas
