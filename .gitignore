@@ -13,3 +13,5 @@ models/
 .DS_Store
 .vscode/
 .idea/
+# Cachés de pytest
+.pytest_cache/

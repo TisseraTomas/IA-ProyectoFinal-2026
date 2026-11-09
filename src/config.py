@@ -1,8 +1,17 @@
 """Parámetros globales, rutas y semillas del proyecto."""
+import logging
+import os
 import random
 from pathlib import Path
 
 import numpy as np
+
+# Desactiva la telemetría anónima de ChromaDB (evita los avisos "Failed to send telemetry event").
+# Debe fijarse antes de importar chromadb; como todos los módulos importan este archivo primero, alcanza.
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+# Con posthog >= 6, chromadb 0.5.0 loguea "Failed to send telemetry event" aunque la telemetría esté apagada.
+# El error es inofensivo; se silencia el logger (la solución de fondo es fijar posthog<6 en requirements.txt).
+logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
 
 SEED = 42
 
@@ -18,8 +27,12 @@ EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 TOP_K = 3
 
 # Umbral de la distancia COSENO (1 - similitud) del fragmento más cercano.
-# Valor inicial: recalibrar con `python -m src.evaluate` y pegar acá el valor sugerido.
-DISTANCE_THRESHOLD = 0.60
+# Peso de la distancia de embeddings en la compuerta: score = ALPHA * d_embeddings + (1 - ALPHA) * d_palabras_clave.
+# 1.0 = sólo embeddings. `python -m src.evaluate` sugiere el valor (se elige en dev).
+HYBRID_ALPHA = 1.0
+
+# Calibrado en el conjunto dev con `python -m src.evaluate`; recalibrar si cambia la base o el test set.
+DISTANCE_THRESHOLD = 0.674
 
 
 def set_seed(seed: int = SEED) -> None:
