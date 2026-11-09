@@ -1,7 +1,7 @@
-"""Evaluación del guardrail: calibra el umbral en DEV y reporta métricas en TEST.
+"""Evaluación del guardrail: calibra (umbral y mezcla) en DEV y reporta métricas en TEST.
 
 Uso:
-    python -m src.evaluate                 # embeddings + reglas + baseline
+    python -m src.evaluate                 # baseline + embeddings + híbrido (+ reglas)
     python -m src.evaluate --baseline-only # sólo el baseline por palabras clave (no requiere modelos)
 """
 from __future__ import annotations
@@ -10,11 +10,12 @@ import argparse
 import json
 
 from src.baseline import KeywordBaseline
-from src.config import DISTANCE_THRESHOLD, TEST_QUERIES_PATH, TOP_K
+from src.config import DISTANCE_THRESHOLD, HYBRID_ALPHA, TEST_QUERIES_PATH, TOP_K
 from src.guardrail import detect_injection
 
 CLASES = {"preguntas_reglamento": "permitir", "fuera_de_tema": "rechazar_fuera_de_tema",
           "prompt_injection": "bloquear_injection"}
+ALPHAS = (1.0, 0.75, 0.5, 0.25)  # 1.0 = sólo embeddings
 
 
 def load_cases(path=TEST_QUERIES_PATH) -> list[dict]:
@@ -58,6 +59,28 @@ def calibrate(rows: list[dict], use_rules: bool) -> float:
     return ties[len(ties) // 2]
 
 
+def hybrid_rows(emb_rows: list[dict], kw_rows: list[dict], alpha: float) -> list[dict]:
+    """Mezcla de distancias: alpha * embeddings + (1 - alpha) * palabras clave (mismo orden de casos)."""
+    return [{**e, "score": alpha * e["score"] + (1 - alpha) * k["score"]} for e, k in zip(emb_rows, kw_rows)]
+
+
+def choose_alpha(emb_rows: list[dict], kw_rows: list[dict], alphas=ALPHAS, use_rules: bool = True):
+    """Elige alpha usando SOLO dev. Ante empates se queda con el mayor alpha (más cerca de embeddings puros).
+
+    Devuelve (alpha, umbral, tabla) con tabla = [(alpha, f1_dev, umbral)].
+    """
+    tabla, best = [], None
+    for a in sorted(alphas, reverse=True):
+        rows = hybrid_rows(emb_rows, kw_rows, a)
+        dev = [r for r in rows if r["split"] == "dev"]
+        t = calibrate(dev, use_rules)
+        f1 = confusion(dev, t, use_rules)["f1"]
+        tabla.append((a, f1, t))
+        if best is None or f1 > best[1] + 1e-12:
+            best = (a, f1, t)
+    return best[0], best[2], tabla
+
+
 def hit_at_k(cases: list[dict], retrieve) -> float | None:
     """Fracción de consultas con cobertura donde algún artículo esperado aparece en el top-k."""
     evaluables = [c for c in cases if c["grupo"] == "preguntas_reglamento" and c["articulos_esperados"]]
@@ -86,6 +109,31 @@ def report(nombre: str, rows: list[dict], use_rules: bool, hit: float | None, th
     return {**m, "umbral": t}
 
 
+def diagnostico(rows: list[dict], cache: dict, t: float) -> None:
+    print("\nConsultas válidas rechazadas (falsos rechazos):")
+    fr = [r for r in rows if r["permitido"] and r["score"] > t]
+    for r in fr:
+        print(f"  {r['id']} [{r.get('cobertura')}] d={r['score']:.3f}  {r['texto'][:70]}")
+    if not fr:
+        print("  (ninguna)")
+
+    print("Consultas que NO deberían pasar y el sistema deja pasar (falsos positivos):")
+    fp = sorted((r for r in rows if not r["permitido"] and r["score"] <= t and not r["rule"]),
+                key=lambda r: r["score"])
+    for r in fp:
+        print(f"  {r['id']} [{r['split']}] d={r['score']:.3f} -> art. {cache[r['id']][0]['articulo']}  {r['texto'][:60]}")
+    if not fp:
+        print("  (ninguna)")
+
+    validas = sorted((r for r in rows if r["permitido"]), key=lambda r: -r["score"])
+    ajenas = [r["score"] for r in rows if r["grupo"] == "fuera_de_tema"]
+    print(f"\nDistancia máx. entre consultas válidas: {validas[0]['score']:.3f} | "
+          f"mín. entre fuera de tema: {min(ajenas):.3f} (si la primera supera a la segunda, hay solapamiento)")
+    print("Las 6 consultas válidas más lejanas:")
+    for r in validas[:6]:
+        print(f"  {r['id']} [{r.get('cobertura')}] d={r['score']:.3f}  {r['texto'][:70]}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--baseline-only", action="store_true")
@@ -95,10 +143,10 @@ def main() -> None:
     n_dev = sum(c["split"] == "dev" for c in cases)
     print(f"Casos: {len(cases)} (dev={n_dev}, test={len(cases) - n_dev}). Umbral calibrado en dev, métricas en test.\n")
 
+    test_cases = [c for c in cases if c["split"] == "test"]
     base = KeywordBaseline()
     base_rows = [_row(c, base.distance(c["texto"])) for c in cases]
-    base_hit = hit_at_k([c for c in cases if c["split"] == "test"],
-                        lambda q: [h["articulo"] for h, _ in base.rank(q, TOP_K)])
+    base_hit = hit_at_k(test_cases, lambda q: [h["articulo"] for h, _ in base.rank(q, TOP_K)])
     report("Baseline keywords", base_rows, False, base_hit)
     report("Baseline keywords + reglas", base_rows, True, base_hit)
     if a.baseline_only:
@@ -107,22 +155,27 @@ def main() -> None:
     from src.guardrail import IntentGuardrail
     from src.vector_store import build_vector_store
 
-    guard = IntentGuardrail(build_vector_store(), k=TOP_K)
+    guard = IntentGuardrail(build_vector_store(), k=TOP_K, alpha=1.0)  # sólo para recuperar
     cache = {c["id"]: guard.retrieve(c["texto"]) for c in cases}
     emb_rows = [_row(c, cache[c["id"]][0]["distance"]) for c in cases]
-    emb_hit = hit_at_k([c for c in cases if c["split"] == "test"],
-                       lambda q: [h["articulo"] for h in guard.retrieve(q)])
+    emb_hit = hit_at_k(test_cases, lambda q: [h["articulo"] for h in guard.retrieve(q)])
     report("Embeddings (sólo semántica)", emb_rows, False, emb_hit)
-    res = report("Embeddings + reglas (sistema)", emb_rows, True, emb_hit)
-    print(f"\nUmbral sugerido para src/config.py: DISTANCE_THRESHOLD = {res['umbral']:.3f} "
-          f"(actual: {DISTANCE_THRESHOLD})")
+    res = report("Embeddings + reglas", emb_rows, True, emb_hit)
 
-    # Diagnóstico: consultas válidas que el sistema bloquearía, por cobertura del reglamento
-    t = res["umbral"]
-    print("\nConsultas válidas rechazadas (falsos rechazos) con el umbral sugerido:")
-    for r in emb_rows:
-        if r["permitido"] and r["score"] > t:
-            print(f"  {r['id']} [{r.get('cobertura')}] d={r['score']:.3f}  {r['texto'][:70]}")
+    # Compuerta híbrida: mezcla embeddings + palabras clave; alpha y umbral se eligen SOLO con dev
+    alpha, t_h, tabla = choose_alpha(emb_rows, base_rows)
+    hyb_rows = hybrid_rows(emb_rows, base_rows, alpha)
+    print(f"\nMezcla embeddings/palabras clave (alpha = peso de embeddings), elegida con dev:")
+    for al, f1_dev, t in tabla:
+        test_m = confusion([r for r in hybrid_rows(emb_rows, base_rows, al) if r["split"] == "test"], t, True)
+        print(f"  alpha={al:.2f}  umbral={t:.3f}  F1 dev={f1_dev:.3f}  F1 test={test_m['f1']:.3f}"
+              f"{'   <- elegido' if al == alpha else ''}")
+    final = report(f"Híbrido + reglas (alpha={alpha:.2f})", hyb_rows, True, emb_hit, threshold=t_h)
+
+    print(f"\nSugerido para src/config.py: HYBRID_ALPHA = {alpha}  DISTANCE_THRESHOLD = {t_h:.3f} "
+          f"(actual: HYBRID_ALPHA = {HYBRID_ALPHA}, DISTANCE_THRESHOLD = {DISTANCE_THRESHOLD})")
+    print(f"\n=== Diagnóstico del sistema sugerido (alpha={alpha:.2f}, umbral={t_h:.3f}) ===")
+    diagnostico(hyb_rows, cache, t_h)
 
 
 if __name__ == "__main__":
