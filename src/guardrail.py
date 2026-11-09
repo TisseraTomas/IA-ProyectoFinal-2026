@@ -1,31 +1,93 @@
+"""Guardrail de dos capas: (1) reglas anti prompt-injection, (2) distancia semántica al reglamento."""
+from __future__ import annotations
+
+import re
+import unicodedata
+
+from src.config import DISTANCE_THRESHOLD, TOP_K
+
+# --------------------------------------------------------------------------- capa 1: reglas
+# Se aplican sobre el texto en minúsculas y sin acentos.
+_OVERRIDE = (
+    r"\b(ignora|ignorame|ignoren|olvida|olvidate|olvidense|desestima|omite|saltea|salteate|saltate|"
+    r"ignore|disregard|forget|bypass|override)\b.{0,60}"
+    r"\b(instruccion\w*|regla\w*|reglamento|restriccion\w*|limite\w*|indicacion\w*|filtro\w*|directiva\w*|"
+    r"prompt|documento\w*|rule\w*|instruction\w*|guideline\w*|anterior\w*|previa\w*|previous|prior|above)"
+)
+INJECTION_PATTERNS: dict[str, str] = {
+    "ignorar_instrucciones": _OVERRIDE,
+    "pedir_prompt_o_config": (
+        r"\b(tu|tus|your)\s+(prompt|instruccion\w*|configuracion|config\w*|reglas|system|"
+        r"hidden|internal|secret)\b"
+    ),
+    "prompt_de_sistema": (
+        r"\b(prompt|instruccion\w*|configuracion|reglas)\s+(del?\s+sistema|internas?|ocultas?|iniciales|secretas?)"
+        r"|\b(hidden|internal|secret)\s+(configuration|instructions?|prompt|rules)"
+        r"|system[ _]?prompt|reglas_internas"
+    ),
+    "modo_especial": r"developer mode|modo (desarrollador|developer|dios|mantenimiento|admin)|jailbreak|\bdan\b|do anything now",
+    "delimitadores_falsos": (
+        r"\[/?(system|sistema|inst|admin)\]|</?(reglamento|system|sistema|instructions?)>|<\|.*?\||###\s*(system|instruction)"
+    ),
+    "autoridad_falsa": (
+        r"\b(soy|i am|i'm)\s+(el |la |un |una )?(administrador|admin|desarrollador|developer|creador|programador)\b"
+        r"|(codigo|code) de (autorizacion|acceso)|admin override|\boverride\b"
+    ),
+    "ia_sin_restricciones": (
+        r"\b(bot|ia|ai|modelo|asistente|assistant)\s+(sin|without)\b|unrestricted|jailbroken|uncensored|sin censura"
+    ),
+    "nueva_regla": r"\b(nuevas?|new)\s+(regla|instruccion|rule|instruction)s?\s*:",
+    "codificacion": r"[a-z0-9+/]{24,}={0,2}|base64|decodifica|rot13",
+    "secretos": (
+        r"\b(muestra\w*|mostra\w*|imprim\w*|revela\w*|reveal|show|print|dame|pasame|decime)\b.{0,40}"
+        r"(variables? de entorno|api[ _-]?key|claves?|tokens?|credenciales|password)"
+    ),
+}
+_COMPILED = {name: re.compile(rx) for name, rx in INJECTION_PATTERNS.items()}
+
+
+def normalize(text: str) -> str:
+    text = unicodedata.normalize("NFKD", text.lower())
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def detect_injection(user_query: str) -> str | None:
+    """Devuelve el nombre de la primera regla que dispara (o None). No usa embeddings."""
+    norm = normalize(user_query)
+    # el patrón de codificación se evalúa sobre el texto original (distingue mayúsculas/minúsculas de base64)
+    if re.search(r"[A-Za-z0-9+/]{24,}={0,2}", user_query):
+        return "codificacion"
+    for name, rx in _COMPILED.items():
+        if name != "codificacion" and rx.search(norm):
+            return name
+    if "base64" in norm or "decodifica" in norm or "rot13" in norm:
+        return "codificacion"
+    return None
+
+
+# --------------------------------------------------------------------------- capa 2: semántica
 class IntentGuardrail:
-    def __init__(self, vector_db, distance_threshold: float = 1.2):
+    def __init__(self, vector_db, distance_threshold: float = DISTANCE_THRESHOLD, k: int = TOP_K):
         self.vector_db = vector_db
-        # Umbral de distancia: en Chroma con L2, distancias menores a 1.2 o 1.4 
-        # indican alta cercanía semántica.
         self.threshold = distance_threshold
+        self.k = k
 
-    def evaluate_query(self, user_query: str):
-        # Usamos similarity_search_with_score que devuelve distancia (cuanto más chico, más cercano)
-        results = self.vector_db.similarity_search_with_score(user_query, k=1)
-        
-        if not results:
-            return {"allowed": False, "reason": "No match", "score": 0.0, "data": None}
+    def retrieve(self, user_query: str) -> list[dict]:
+        """Top-k fragmentos con su distancia coseno (menor = más cercano)."""
+        results = self.vector_db.similarity_search_with_score(user_query, k=self.k)
+        return [{**doc.metadata, "distance": float(dist)} for doc, dist in results]
 
-        doc, distance = results[0]
+    def evaluate_query(self, user_query: str) -> dict:
+        rule = detect_injection(user_query)
+        if rule:
+            return {"allowed": False, "reason": f"Prompt injection ({rule})", "score": None, "data": None}
 
-        # Si la distancia es mayor al umbral, significa que está muy lejos semánticamente (Out of Domain)
-        if distance > self.threshold:
-            return {
-                "allowed": False,
-                "reason": "Out of Domain / Potential Jailbreak",
-                "score": distance,
-                "data": None
-            }
+        hits = self.retrieve(user_query)
+        if not hits:
+            return {"allowed": False, "reason": "Sin coincidencias", "score": None, "data": None}
 
-        return {
-            "allowed": True,
-            "reason": "In Domain",
-            "score": distance,
-            "data": doc.metadata
-        }
+        best = hits[0]["distance"]
+        if best > self.threshold:
+            return {"allowed": False, "reason": "Fuera de dominio", "score": best, "data": None}
+        return {"allowed": True, "reason": "En dominio", "score": best, "data": hits}
