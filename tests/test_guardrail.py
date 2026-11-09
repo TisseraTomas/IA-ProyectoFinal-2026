@@ -32,7 +32,7 @@ def guardrail(tmp_path_factory):
 
 def test_guardrail_performance(guardrail):
     """Umbral calibrado en DEV; las métricas se exigen en TEST (sin fuga de información)."""
-    rows = [_row(c, guardrail.retrieve(c["texto"])[0]["distance"]) for c in CASES]
+    rows = [_row(c, guardrail.score(c["texto"])) for c in CASES]
     dev = [r for r in rows if r["split"] == "dev"]
     test = [r for r in rows if r["split"] == "test"]
     t = calibrate(dev, use_rules=True)
