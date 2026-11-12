@@ -82,7 +82,12 @@ def clean_line(line: str) -> str:
 
 
 def extract_text(pdf: Path) -> str:
-    out = subprocess.run(["pdftotext", "-raw", str(pdf), "-"], capture_output=True, text=True, check=True)
+    """pdftotext en modo -raw (mantiene ✅/❌ en la fila) y codificación UTF-8 explícita (Windows/Linux/macOS)."""
+    try:
+        out = subprocess.run(["pdftotext", "-raw", "-enc", "UTF-8", str(pdf), "-"],
+                             capture_output=True, text=True, encoding="utf-8", check=True)
+    except FileNotFoundError:
+        raise SystemExit("No se encontró `pdftotext`. Instalá poppler-utils (ver README §4.1) o usá --txt.")
     return out.stdout
 
 
