@@ -17,25 +17,42 @@ _OVERRIDE = (
 INJECTION_PATTERNS: dict[str, str] = {
     "ignorar_instrucciones": _OVERRIDE,
     "pedir_prompt_o_config": (
-        r"\b(tu|tus|your)\s+(prompt|instruccion\w*|configuracion|config\w*|reglas|system|"
-        r"hidden|internal|secret)\b"
+        r"\b(tu|tus|your)\s+(prompt|instruccion\w*|indicacion\w*|directiva\w*|pauta\w*|lineamiento\w*|"
+        r"configuracion|config\w*|reglas|system|hidden|internal|secret)\b"
     ),
     "prompt_de_sistema": (
-        r"\b(prompt|instruccion\w*|configuracion|reglas)\s+(del?\s+sistema|internas?|ocultas?|iniciales|secretas?)"
+        r"\b(prompt|instruccion\w*|indicacion\w*|directiva\w*|configuracion)\s+(del?\s+sistema|internas?|ocultas?|iniciales|secretas?)"
         r"|\b(hidden|internal|secret)\s+(configuration|instructions?|prompt|rules)"
         r"|system[ _]?prompt|reglas_internas"
     ),
-    "modo_especial": r"developer mode|modo (desarrollador|developer|dios|mantenimiento|admin)|jailbreak|\bdan\b|do anything now",
+    # "DAN" es un jailbreak conocido pero también el verbo "dar" en español ("me dan equivalencias"):
+    # sólo se marca con contexto de rol/modo.
+    "modo_especial": (
+        r"developer mode|modo (desarrollador|developer|dios|mantenimiento|admin|root|dan)|\bdan mode\b|jailbreak|"
+        r"do anything now|\b(sos|eres|you are|you're|actua como|act as|ahora sos)\s+dan\b"
+    ),
     "delimitadores_falsos": (
         r"\[/?(system|sistema|inst|admin)\]|</?(reglamento|system|sistema|instructions?)>|<\|.*?\||###\s*(system|instruction)"
+        r"|^\s*(system|sistema|assistant|asistente|developer|admin|root)\s*:"
     ),
     "autoridad_falsa": (
         r"\b(soy|i am|i'm)\s+(el |la |un |una )?(administrador|admin|desarrollador|developer|creador|programador)\b"
         r"|(codigo|code) de (autorizacion|acceso)|admin override|\boverride\b"
+        r"|\bel usuario (es|tiene)\s+(administrador|admin|root|permisos)"
+        r"|\bpermisos (de|como) (admin|administrador|root)"
     ),
     "ia_sin_restricciones": (
         r"\b(bot|ia|ai|modelo|asistente|assistant)\s+(sin|without)\b|unrestricted|jailbroken|uncensored|sin censura"
     ),
+    "olvidar_lo_anterior": (
+        r"\b(olvidate|olvida|olvidense|ignora|ignorame)\s+(de\s+)?(todo|lo)\s+(lo\s+)?(que|anterior)"
+        r"|\bcomo si no tuvieras\s+(ninguna\s+)?(politica|regla|restriccion|limite|filtro)\w*"
+    ),
+    "repetir_contexto": (
+        r"\b(repeti|repite|copia|pega|escribi|transcribi)\w*\b.{0,40}"
+        r"(lo que dice (arriba|antes)|texto (previo|anterior|inicial)|mensaje (anterior|inicial|del sistema)|todo lo anterior)"
+    ),
+    "credenciales_admin": r"\b(clave|contrasena|password|credenciales)\s+(del?\s+)?(administrador|admin|sistema|root)\b",
     "nueva_regla": r"\b(nuevas?|new)\s+(regla|instruccion|rule|instruction)s?\s*:",
     "codificacion": r"[a-z0-9+/]{24,}={0,2}|base64|decodifica|rot13",
     "secretos": (
