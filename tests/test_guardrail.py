@@ -43,8 +43,11 @@ def test_guardrail_performance(guardrail):
     assert "prompt_injection" not in m["fp_por_grupo"], "Se coló un prompt injection"
 
 
-def test_embeddings_recuperan_mejor_que_el_baseline(guardrail):
-    """Justifica el uso de embeddings: Hit@k de artículos esperados >= baseline por palabras clave."""
+def test_embeddings_no_recuperan_peor_que_el_baseline_en_test(guardrail):
+    """Regresión: en el conjunto test (17 preguntas) los embeddings no recuperan peor que las palabras clave.
+
+    No prueba superioridad: sobre las 37 preguntas dev+test no hay diferencia demostrable (README §2.2).
+    """
     test = [c for c in CASES if c["split"] == "test"]
     base = KeywordBaseline()
     h_base = hit_at_k(test, lambda q: [h["articulo"] for h, _ in base.rank(q, TOP_K)])
