@@ -15,3 +15,6 @@ models/
 .idea/
 # Cachés de pytest
 .pytest_cache/
+
+# Log estructurado de la API
+logs/

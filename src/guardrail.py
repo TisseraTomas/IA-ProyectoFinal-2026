@@ -113,13 +113,13 @@ class IntentGuardrail:
     def evaluate_query(self, user_query: str) -> dict:
         rule = detect_injection(user_query)
         if rule:
-            return {"allowed": False, "reason": f"Prompt injection ({rule})", "score": None, "data": None}
+            return {"allowed": False, "reason": f"Prompt injection ({rule})", "score": None, "data": None, "rule": rule}
 
         hits = self.retrieve(user_query)
         if not hits:
-            return {"allowed": False, "reason": "Sin coincidencias", "score": None, "data": None}
+            return {"allowed": False, "reason": "Sin coincidencias", "score": None, "data": None, "rule": None}
 
         best = self.score(user_query, hits)
         if best > self.threshold:
-            return {"allowed": False, "reason": "Fuera de dominio", "score": best, "data": None}
-        return {"allowed": True, "reason": "En dominio", "score": best, "data": hits}
+            return {"allowed": False, "reason": "Fuera de dominio", "score": best, "data": None, "rule": None}
+        return {"allowed": True, "reason": "En dominio", "score": best, "data": hits, "rule": None}
