@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consulta semántica del Reglamento del Alumno (CRUC IUA)</title>
+<meta name="description" content="Recuperación semántica con embeddings multilingües y guardrail anti prompt-injection sobre el Reglamento del Alumno del CRUC IUA. Proyecto Final de Inteligencia Artificial 2026.">
+<style>
+  :root { --bg:#f7f8fa; --card:#ffffff; --ink:#1d2330; --muted:#5b6475; --line:#e3e6ec; --brand:#1f4e8c; --ok:#1b7f4b; --okbg:#e6f5ec; --warn:#9a6700; --warnbg:#fff4d6; --bad:#b3261e; --badbg:#fdeceb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f131a; --card:#171c26; --ink:#e8ebf2; --muted:#9aa4b5; --line:#2a3242; --brand:#7fb0ff; --ok:#5fd394; --okbg:#12301f; --warn:#f0c04d; --warnbg:#3a2f0e; --bad:#ff8a80; --badbg:#3a1714; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); line-height:1.6; }
+  .wrap { max-width:960px; margin:0 auto; padding:0 20px; }
+  header.hero { background:linear-gradient(135deg,#16365f,#1f4e8c); color:#fff; padding:56px 0 44px; }
+  header.hero h1 { margin:0 0 10px; font-size:2rem; line-height:1.25; }
+  header.hero p.sub { margin:0 0 18px; font-size:1.1rem; opacity:.92; max-width:720px; }
+  .meta { font-size:.92rem; opacity:.85; }
+  .btns { margin-top:22px; display:flex; gap:12px; flex-wrap:wrap; }
+  .btn { display:inline-block; padding:9px 16px; border-radius:8px; border:1px solid rgba(255,255,255,.6); color:#fff; text-decoration:none; font-weight:600; font-size:.95rem; }
+  .btn.primary { background:#fff; color:#16365f; border-color:#fff; }
+  nav.toc { position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line); }
+  nav.toc .wrap { display:flex; gap:18px; overflow-x:auto; padding-top:10px; padding-bottom:10px; }
+  nav.toc a { color:var(--muted); text-decoration:none; font-size:.92rem; white-space:nowrap; }
+  nav.toc a:hover { color:var(--brand); }
+  section { padding:36px 0 8px; }
+  h2 { font-size:1.45rem; margin:0 0 14px; }
+  h3 { font-size:1.1rem; margin:22px 0 8px; }
+  p, li { color:var(--ink); }
+  .muted { color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:14px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+  .stat { text-align:center; padding:16px 10px; }
+  .stat b { display:block; font-size:1.7rem; color:var(--brand); }
+  .stat span { font-size:.88rem; color:var(--muted); }
+  .flow { display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; margin:14px 0; }
+  .step { flex:1 1 150px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:.9rem; }
+  .step b { display:block; margin-bottom:2px; color:var(--brand); }
+  .arrow { align-self:center; color:var(--muted); font-size:1.3rem; }
+  table { width:100%; border-collapse:collapse; font-size:.93rem; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:rgba(127,127,127,.09); }
+  .scroll { overflow-x:auto; }
+  code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88rem; }
+  pre { background:#0f1623; color:#dbe4f5; padding:14px 16px; border-radius:10px; overflow-x:auto; }
+  code { background:rgba(127,127,127,.15); padding:1px 5px; border-radius:4px; }
+  pre code { background:none; padding:0; }
+  figure { margin:16px 0; }
+  figure img { max-width:100%; border:1px solid var(--line); border-radius:10px; display:block; }
+  figcaption { font-size:.88rem; color:var(--muted); margin-top:6px; }
+  /* demo interactiva */
+  .demo-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+  .demo-groups h4 { margin:0 0 8px; font-size:.95rem; }
+  .qbtn { display:block; width:100%; text-align:left; background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:6px; font:inherit; font-size:.86rem; cursor:pointer; }
+  .qbtn:hover { border-color:var(--brand); }
+  .qbtn.active { border-color:var(--brand); box-shadow:0 0 0 2px rgba(31,78,140,.25); }
+  .free { display:flex; gap:8px; margin:14px 0 6px; }
+  .free input { flex:1; padding:9px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit; }
+  .free button { padding:9px 16px; border:0; border-radius:8px; background:var(--brand); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  .chip { display:inline-block; padding:3px 10px; border-radius:999px; font-weight:600; font-size:.85rem; }
+  .chip.ok { background:var(--okbg); color:var(--ok); }
+  .chip.warn { background:var(--warnbg); color:var(--warn); }
+  .chip.bad { background:var(--badbg); color:var(--bad); }
+  .frag { border-left:4px solid var(--brand); background:rgba(127,127,127,.07); border-radius:0 8px 8px 0; padding:10px 14px; margin:10px 0; }
+  .frag .t { font-weight:700; }
+  .frag .s { font-size:.82rem; color:var(--muted); }
+  .frag pre.lit { background:none; color:var(--ink); padding:6px 0 0; margin:0; white-space:pre-wrap; font-family:inherit; font-size:.9rem; }
+  .nota { margin-top:8px; font-size:.88rem; color:var(--warn); }
+  .aviso { color:var(--muted); font-size:.9rem; }
+  footer { margin-top:40px; padding:26px 0 40px; border-top:1px solid var(--line); color:var(--muted); font-size:.9rem; }
+  a { color:var(--brand); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Consulta semántica del Reglamento del Alumno (CRUC IUA)</h1>
+    <p class="sub">Un estudiante pregunta en lenguaje informal; el sistema recupera los artículos relevantes del reglamento con su cita y su texto literal, y un guardrail de dos capas rechaza lo que no corresponde.</p>
+    <div class="meta">Proyecto Final · Inteligencia Artificial 2026 · Ingeniería en Informática · Facultad de Ingeniería<br>Centro Regional Universitario Córdoba (CRUC IUA), Universidad de la Defensa Nacional<br>Autor: Tomás Tissera · Docente: Ing. Hernando Alexis González</div>
+    <div class="btns">
+      <a class="btn primary" href="#demo">Probar la demo</a>
+      <a class="btn" href="https://github.com/TisseraTomas/IA-ProyectoFinal-2026">Repositorio en GitHub</a>
+    </div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#problema">Problema</a><a href="#arquitectura">Arquitectura</a><a href="#demo">Demo interactiva</a><a href="#resultados">Resultados</a><a href="#api">API REST</a><a href="#limitaciones">Limitaciones</a><a href="#reproducir">Reproducir</a>
+</div></nav>
+
+<main class="wrap">
+
+<section id="problema">
+  <h2>El problema</h2>
+  <p>El reglamento es extenso y los estudiantes lo consultan de manera informal ("<em>cuanto % de asistencia necesito pa no quedar libre??</em>"). El sistema debe <strong>responder solo con lo que dice el reglamento</strong> (Títulos I a X), rechazar lo que no es del reglamento y resistir intentos de manipulación (<em>prompt injection</em>).</p>
+  <p class="muted">El MVP <strong>no genera texto con un LLM</strong>: recupera y devuelve el texto literal de los artículos más cercanos, para no inventar plazos ni porcentajes.</p>
+  <div class="grid">
+    <div class="card stat"><b>92</b><span>fragmentos, uno por artículo o inciso (Títulos I-X)</span></div>
+    <div class="card stat"><b>2 capas</b><span>guardrail: reglas anti-injection + distancia semántica</span></div>
+    <div class="card stat"><b>87 + 10</b><span>casos de evaluación propios (dev/test) y externos (held-out)</span></div>
+    <div class="card stat"><b>3 endpoints</b><span>API REST con FastAPI, Pydantic y logging JSON</span></div>
+  </div>
+</section>
+
+<section id="arquitectura">
+  <h2>Arquitectura de la solución</h2>
+  <div class="flow">
+    <div class="step"><b>Consulta</b>texto informal del estudiante</div><div class="arrow">→</div>
+    <div class="step"><b>Capa 1: reglas</b>detecta intentos de manipulación (ES/EN)</div><div class="arrow">→</div>
+    <div class="step"><b>Embeddings</b>modelo multilingüe, vectores normalizados</div><div class="arrow">→</div>
+    <div class="step"><b>ChromaDB</b>top-3 fragmentos por distancia coseno</div><div class="arrow">→</div>
+    <div class="step"><b>Capa 2: umbral</b>rechaza si el más cercano está lejos</div><div class="arrow">→</div>
+    <div class="step"><b>Respuesta</b>artículo citado + texto literal</div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Decisiones de diseño y por qué</h3>
+    <ul>
+      <li><strong>Base de conocimiento verificada, sin LLM:</strong> un parser determinístico parte el PDF del reglamento por encabezados numerados y copia el texto literal. Un chequeo automático falla si alguna línea del PDF no quedó en un fragmento, y los tests fijan los datos duros (escala de notas, plazos, porcentajes, tablas de actuaciones).</li>
+      <li><strong>Modelo multilingüe</strong> (<code>paraphrase-multilingual-MiniLM-L12-v2</code>): las consultas son en español informal, con abreviaturas ("pa", "x", "q").</li>
+      <li><strong>Dos capas porque la medición lo exigió:</strong> con embeddings solos, solo el 33 % de los ataques del test quedó bloqueado; un ataque que incluye una pregunta válida es semánticamente cercano al reglamento. Las reglas cubren ese hueco.</li>
+      <li><strong>Umbral calibrado en un conjunto <em>dev</em></strong> y métricas reportadas en <em>test</em>, para evitar fuga de información.</li>
+      <li><strong>Baseline sin IA</strong> (palabras clave ponderadas por IDF) para poder afirmar, con intervalos de confianza, qué aportan los embeddings.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="demo">
+  <h2>Demo interactiva</h2>
+  <p>Elegí una consulta para ver cómo la procesa el sistema real: decisión del guardrail, distancia al umbral y artículos recuperados. <span class="muted">Esta página es estática y no puede ejecutar el modelo de embeddings en el navegador: los resultados de los ejemplos se calcularon con el sistema completo (<code>python -m src.generar_demo</code>) y se guardaron.</span></p>
+  <div id="demo-app"><p class="aviso">Cargando ejemplos…</p></div>
+</section>
+
+<section id="resultados">
+  <h2>Resultados</h2>
+  <p>Conjunto propio de 87 consultas (44 <em>dev</em> para calibrar, 43 <em>test</em> para reportar) más 10 casos externos. Positivo = consulta que debe responderse.</p>
+  <h3>Conjunto <em>test</em> (43 casos; Hit@3 sobre 17 preguntas)</h3>
+  <div class="scroll"><table>
+    <tr><th>Sistema</th><th>F1</th><th>Injection bloqueada</th><th>Hit@3</th></tr>
+    <tr><td>Baseline palabras clave</td><td>0.894</td><td>100 %</td><td>53 % (9/17)</td></tr>
+    <tr><td>Embeddings (solo semántica)</td><td>0.800</td><td>33 %</td><td>71 % (12/17)</td></tr>
+    <tr><td><strong>Embeddings + reglas (sistema)</strong></td><td><strong>0.898</strong></td><td><strong>100 %</strong></td><td><strong>71 % (12/17)</strong></td></tr>
+  </table></div>
+  <h3>Todo el conjunto, con intervalos de confianza</h3>
+  <div class="scroll"><table>
+    <tr><th>Medida</th><th>Embeddings</th><th>Baseline</th><th>Diferencia (IC 95 %)</th></tr>
+    <tr><td>Hit@3 (37 preguntas con artículos esperados)</td><td>24/37 (65 %)</td><td>25/37 (68 %)</td><td>−2.7 pts [−18.9; +13.5]</td></tr>
+    <tr><td>F1, validación cruzada de 5 folds (con reglas)</td><td>0.878 [0.800; 0.942]</td><td>0.837 [0.750; 0.909]</td><td>+0.041 [−0.026; +0.108]</td></tr>
+  </table></div>
+  <div class="card"><strong>Lectura honesta:</strong> los intervalos incluyen el cero, por lo que <strong>no hay una diferencia demostrable entre embeddings y palabras clave</strong> con este conjunto. Lo que sí está medido es que <strong>las reglas son imprescindibles</strong> (la distancia semántica sola deja pasar 2 de cada 3 ataques). También se probó una compuerta híbrida (embeddings + palabras clave) y una recuperación híbrida (RRF): ninguna mejoró de forma concluyente, y se documentaron como resultados negativos.</div>
+  <h3>Casos externos (held-out): 9/10</h3>
+  <p>Diez casos generados por un LLM, no vistos al escribir las reglas ni al calibrar. Se bloquearon los 3 ataques y pasaron las 3 consultas válidas; de las 4 fuera de tema, 3 se rechazaron y una ("¿Quién ganó el mundial 2022?") pasó el filtro. El baseline con reglas acertó 8/10. Con 10 casos la diferencia es de uno y no es concluyente.</p>
+</section>
+
+<section id="api">
+  <h2>API REST (FastAPI)</h2>
+  <p>El motor se expone como una API documentada con OpenAPI (Swagger UI en <code>/docs</code>): validación de entrada con Pydantic (la pregunta debe tener entre 3 y 500 caracteres), códigos HTTP adecuados (200, 404, 422, 500, 503) y <strong>logging estructurado</strong>: una línea JSON por consulta con <code>request_id</code>, decisión, regla que disparó, distancia, artículos y latencia. Una consulta rechazada no es un error: responde 200 con <code>permitido=false</code>.</p>
+  <figure><img src="api_swagger.png" alt="Documentación Swagger de la API"><figcaption>Endpoints: <code>GET /health</code>, <code>POST /consulta</code> y <code>GET /articulos/{articulo}</code>.</figcaption></figure>
+  <figure><img src="api_consulta.png" alt="Detalle del endpoint POST /consulta"><figcaption>El endpoint <code>POST /consulta</code> espera un JSON con el campo <code>pregunta</code>.</figcaption></figure>
+  <figure><img src="api_ejecutar_consulta.png" alt="Ejecución de una consulta"><figcaption>Consulta de ejemplo: "hasta cuando vale la regularidad de una materia?".</figcaption></figure>
+  <figure><img src="api_respuesta.png" alt="Respuesta JSON de la API"><figcaption>Respuesta: <code>permitido: true</code>, <code>motivo: en_dominio</code>, y los fragmentos con su texto literal y su distancia.</figcaption></figure>
+  <h3>Ejecución del motor por consola</h3>
+  <figure><img src="demo.png" alt="Ejecución de main.py"><figcaption><code>python main.py</code>: una consulta válida, una fuera de tema y un intento de prompt injection.</figcaption></figure>
+</section>
+
+<section id="limitaciones">
+  <h2>Limitaciones conocidas</h2>
+  <ul>
+    <li><strong>La compuerta de dominio deja pasar demasiado:</strong> 11 de las 25 consultas fuera de tema del conjunto propio. Hay solapamiento entre las distancias de las consultas válidas y las ajenas, por lo que ningún umbral único las separa; bajarlo rechazaría consultas legítimas. Se priorizó no rechazar consultas válidas.</li>
+    <li><strong>Las reglas anti-injection están sobreajustadas al conjunto propio.</strong> En una revisión externa con 10 ataques nuevos no detectaron ninguno y se ampliaron; los 3 ataques externos posteriores sí se bloquearon, pero son pocos y explícitos. Hace falta un conjunto más grande escrito por terceros.</li>
+    <li><strong>El MVP no genera respuestas con un LLM</strong>: el módulo opcional de generación no está evaluado.</li>
+    <li>La recuperación en consultas largas y coloquiales es mejorable: en 2 de las 3 consultas válidas externas el artículo recuperado primero no era el esperado.</li>
+    <li>Conjunto de evaluación chico y escrito por el autor: las métricas tienen intervalos amplios.</li>
+  </ul>
+</section>
+
+<section id="reproducir">
+  <h2>Cómo reproducirlo</h2>
+<pre><code>git clone https://github.com/TisseraTomas/IA-ProyectoFinal-2026.git
+cd IA-ProyectoFinal-2026
+python -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt     # o requirements-lock.txt para las versiones exactas
+
+pytest -v                           # pruebas automatizadas
+python -m src.evaluate              # baseline vs embeddings, intervalos de confianza y casos externos
+python main.py                      # MVP por consola
+uvicorn src.api:app --port 8000     # API REST (documentación en /docs)</code></pre>
+  <p class="muted">Entorno aislado, versiones fijadas (con <em>lockfile</em>), semilla global y base de conocimiento regenerable desde el PDF con verificación automática.</p>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  Proyecto Final de Inteligencia Artificial · Ingeniería en Informática · CRUC IUA, Universidad de la Defensa Nacional · 2026<br>
+  Código bajo licencia MIT. El texto del reglamento pertenece al CRUC IUA y se incluye con fines académicos.
+</div></footer>
+
+<script>
+(async function () {
+  var box = document.getElementById('demo-app');
+  var data;
+  try {
+    var resp = await fetch('demo_data.json');
+    if (!resp.ok) { throw new Error('HTTP ' + resp.status); }
+    data = await resp.json();
+  } catch (e) {
+    box.innerHTML = '<p class="aviso">No se pudieron cargar los ejemplos de la demo (demo_data.json). Las capturas de la sección API muestran el sistema en funcionamiento.</p>';
+    return;
+  }
+
+  var GRUPOS = [
+    ['valida', 'Consultas del reglamento'],
+    ['fuera', 'Fuera de tema'],
+    ['ataque', 'Intentos de manipulación']
+  ];
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text !== undefined && text !== null) { n.textContent = text; }
+    return n;
+  }
+  function norm(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  var out = el('div', 'card');
+  out.appendChild(el('p', 'aviso', 'Elegí una consulta de la lista para ver el resultado.'));
+  var buttons = [];
+
+  function render(item, btn) {
+    buttons.forEach(function (b) { b.classList.remove('active'); });
+    if (btn) { btn.classList.add('active'); }
+    out.innerHTML = '';
+    out.appendChild(el('p', null, 'Consulta: “' + item.texto + '”'));
+    var chip;
+    if (item.motivo === 'en_dominio') { chip = el('span', 'chip ok', 'Permitida: en dominio'); }
+    else if (item.motivo === 'prompt_injection') { chip = el('span', 'chip bad', 'Bloqueada: prompt injection (regla ' + item.regla + ')'); }
+    else { chip = el('span', 'chip warn', 'Rechazada: ' + item.motivo.replace(/_/g, ' ')); }
+    out.appendChild(chip);
+    var detalle;
+    if (item.distancia === null) {
+      detalle = 'Bloqueada por la capa 1 (reglas), antes de la búsqueda semántica.';
+    } else {
+      detalle = 'Distancia coseno al fragmento más cercano: ' + item.distancia.toFixed(3) + ' (umbral ' + data.umbral + ').';
+    }
+    out.appendChild(el('p', 'muted', detalle));
+    item.fragmentos.forEach(function (f) {
+      var box2 = el('div', 'frag');
+      box2.appendChild(el('div', 't', 'Art. ' + f.articulo + ' — ' + f.articulo_nombre));
+      box2.appendChild(el('div', 's', f.titulo + ' · distancia ' + f.distancia.toFixed(3)));
+      box2.appendChild(el('pre', 'lit', f.texto_literal));
+      out.appendChild(box2);
+    });
+    if (!item.permitido && item.motivo !== 'prompt_injection') {
+      out.appendChild(el('p', 'muted', 'Respuesta al usuario: “Lo siento, solo puedo responder preguntas relacionadas con el Reglamento del Alumno del CRUC IUA.”'));
+    }
+    if (item.nota) { out.appendChild(el('p', 'nota', item.nota)); }
+  }
+
+  box.innerHTML = '';
+  var groups = el('div', 'demo-groups');
+  GRUPOS.forEach(function (g) {
+    var col = el('div');
+    col.appendChild(el('h4', null, g[1]));
+    data.ejemplos.filter(function (e) { return e.grupo === g[0]; }).forEach(function (item) {
+      var b = el('button', 'qbtn', item.texto.length > 90 ? item.texto.slice(0, 87) + '…' : item.texto);
+      b.type = 'button';
+      b.addEventListener('click', function () { render(item, b); });
+      item._btn = b;
+      buttons.push(b);
+      col.appendChild(b);
+    });
+    groups.appendChild(col);
+  });
+  box.appendChild(groups);
+
+  var free = el('div', 'free');
+  var input = el('input');
+  input.type = 'text';
+  input.placeholder = 'Escribí una consulta (solo hay resultados precalculados para los ejemplos)';
+  var go = el('button', null, 'Consultar');
+  go.type = 'button';
+  free.appendChild(input);
+  free.appendChild(go);
+  box.appendChild(free);
+  var msg = el('p', 'aviso', 'Para probar consultas nuevas, clonar el repositorio y levantar la API con uvicorn (ver “Cómo reproducirlo”).');
+  box.appendChild(msg);
+  box.appendChild(out);
+
+  function buscar() {
+    var q = norm(input.value);
+    if (!q) { return; }
+    var hallado = data.ejemplos.filter(function (e) {
+      var n = norm(e.texto);
+      return n === q || (q.length > 12 && (n.indexOf(q) !== -1 || q.indexOf(n) !== -1));
+    })[0];
+    if (hallado) {
+      render(hallado, hallado._btn);
+    } else {
+      out.innerHTML = '';
+      out.appendChild(el('p', 'aviso', 'Esa consulta no está entre los ejemplos precalculados. Esta demo es estática: elegí uno de la lista, o ejecutá la API localmente para probar cualquier consulta.'));
+    }
+  }
+  go.addEventListener('click', buscar);
+  input.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { buscar(); } });
+})();
+</script>
+</body>
+</html>
