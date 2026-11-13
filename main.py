@@ -1,4 +1,4 @@
-"""Punto de entrada del MVP por consola (RAG + guardrail sobre el Reglamento del Alumno)."""
+"""Punto de entrada del MVP por consola (recuperación semántica + guardrail sobre el Reglamento del Alumno)."""
 import argparse
 import os
 
@@ -37,7 +37,7 @@ def main() -> None:
     ap.add_argument("--interactive", action="store_true", help="modo conversación por consola")
     args = ap.parse_args()
 
-    print("=== INICIALIZANDO MVP RAG + GUARDRAIL ===")
+    print("=== INICIALIZANDO MVP: RECUPERACIÓN SEMÁNTICA + GUARDRAIL ===")
     if not KB_PATH.exists():
         print(f"Error: no se encuentra la base de conocimiento en {KB_PATH}")
         return
