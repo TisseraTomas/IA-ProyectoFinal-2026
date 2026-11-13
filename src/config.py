@@ -18,7 +18,9 @@ SEED = 42
 ROOT = Path(__file__).resolve().parent.parent
 KB_PATH = ROOT / "data" / "reglamento_chunks.json"
 TEST_QUERIES_PATH = ROOT / "data" / "test_queries.json"
+HELDOUT_PATH = ROOT / "data" / "test_queries_heldout.json"  # casos externos: nunca se usan para calibrar
 PERSIST_DIR = ROOT / "models" / "chroma_db"
+LOG_PATH = ROOT / "logs" / "consultas.jsonl"  # log estructurado de la API (una línea JSON por consulta)
 
 # Modelo de embeddings MULTILINGÜE (entrenado para paráfrasis en 50+ idiomas, incluido español).
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
